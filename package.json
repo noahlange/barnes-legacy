@@ -1,0 +1,17 @@
+{
+  "name": "barnes",
+  "version": "0.1.0",
+  "author": "Noah Lange <noahrlange@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/noahlange/barnes.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "lerna": "2.0.0-beta.38"
+  },
+  "scripts": {
+    "build": "lerna run build",
+    "bootstrap": "lerna bootstrap"
+  }
+}
