@@ -1,0 +1,17 @@
+{
+  "name": "barnes-consolidate",
+  "version": "",
+  "dependencies": {
+    "consolidate": "^0.14.5"
+  },
+  "devDependencies": {
+    "@types/consolidate": "^0.0.31",
+    "tslint": "^5.0.0",
+    "typescript": "^2.2.2"
+  },
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint --project '../../tslint.json' src/**/*.ts"
+  }
+}

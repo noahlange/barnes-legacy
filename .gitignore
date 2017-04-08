@@ -1,5 +1,7 @@
 yarn.lock
 node_modules
 examples
-packages/**/*..js
+packages/**/*.js
 wip
+lerna-debug.log
+npm-debug.log

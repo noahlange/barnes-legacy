@@ -1,0 +1,17 @@
+{
+  "name": "barnes-preact",
+  "version": "",
+  "dependencies": {
+    "preact": "^7.2.1",
+    "preact-render-to-string": "^3.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.2.2",
+    "tslint": "^5.0.0"
+  },
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint --project '../../tslint.json' src/**/*.ts"
+  }
+}

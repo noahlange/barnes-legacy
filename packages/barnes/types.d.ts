@@ -14,25 +14,24 @@ declare module 'barnes' {
 
     public set(key: any, value: any): Barnes<T>;
 
-    public use<O>(callback: UseFn<O>): Barnes<T & O>
+    public use<O>(callback: UseFn<O>): Barnes<T & Barnes<O>>
     public fetch<O>(callback: FetchFn): Barnes<T & O>;
     public from<O>(callback: FromFn<O>): Barnes<T & O>;
     public read(dir: string | string[]): Barnes<T & IFile>;
     
     public to(callback: ToFn<T>): this;
-    public write(callback: WriteFn<T>): this;
+    public write(callback: string | WriteFn<T>): this;
     public log(callback?: RenderFn<T>): this;
 
     public then(callback?: () => Promise<any> | any): Promise<any> | any;
     public catch(callback?: () => Promise<any> | any): Promise<any> | any;
-
-    public watch(): this;
 
     public map<O>(callback: MapFn<T, O>): Barnes<O>;
     public reduce<O>(callback: ReduceFn<T, O[]>, initialValue?: O[]): Barnes<O>;
     public reduce<O>(callback: ReduceFn<T, O>, initial?: O): Barnes<O>;
     public series<O>(callback: SeriesFn<T, O>): Barnes<O>;
     public filter(callback: FilterFn<T>): this;
+    public sort(callback: SortFn<T>): this;
 
     constructor(cwd: string);
   }
@@ -60,6 +59,7 @@ declare module 'barnes' {
   export type FetchFn = () => Promise<Response>;
   export type WriteFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<string> | string;
   export type UseFn<O> = ((dir: string) => Promise<Barnes<O>> | Barnes<O>) | Barnes<O>;
+  export type SortFn<I> = (fileA: I, fileB: I, files: I[], barnes: Barnes<I>) => Promise<1 | -1>;
 
   export interface IFile {
     path: string;

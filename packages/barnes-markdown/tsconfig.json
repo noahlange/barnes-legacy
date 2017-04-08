@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "rootDir": "src",
+    "outDir": "lib",
+    "module": "commonjs"
+  }
+}

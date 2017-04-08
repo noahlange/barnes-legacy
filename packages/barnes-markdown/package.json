@@ -1,0 +1,19 @@
+{
+  "name": "barnes-markdown",
+  "version": "",
+  "devDependencies": {
+    "@types/markdown-it": "^0.0.2",
+    "typescript": "^2.2.2",
+    "tslint": "^5.0.0"
+  },
+  "dependencies": {
+    "highlight.js": "^9.10.0",
+    "markdown-it": "^8.3.1",
+    "markdown-it-meta": "^0.0.1"
+  },
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint --project '../../tslint.json' src/**/*.ts"
+  }
+}

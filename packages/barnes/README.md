@@ -60,6 +60,7 @@ write files to a directory.
   and expanding arrays into larger or smaller ones
 - `.series()` operates much like map, but will wait for preceeding operations
   to terminate before continuing onto the next
+- `.sort()` allows you to sort the item list with a sync or async function
 
 Barnes is distributed with a handful of plugins for some common use-cases.
 `barnes-pandoc` allows users to perform conversion operations on files, while

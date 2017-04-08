@@ -1,5 +1,5 @@
-import Barnes from './Barnes';
 import { Response } from 'node-fetch';
+import Barnes from './Barnes';
 
 export type EachFn<I, O extends I> = (file: I, files: I[], barnes: Barnes<I>) => file is O;
 export type MapFn<I, O> = (file: I, files: I[], barnes: Barnes<I>) => Promise<O> | O;
@@ -12,6 +12,7 @@ export type ToFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<any> |
 export type FetchFn = () => Promise<Response>;
 export type WriteFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<string> | string;
 export type UseFn<O> = ((dir: string) => Promise<Barnes<O>> | Barnes<O>) | Barnes<O>;
+export type SortFn<I> = (fileA: I, fileB: I, files: I[], barnes: Barnes<I>) => Promise<1 | -1>;
 
 export interface IHistoryish {
   history: any[];
@@ -22,7 +23,7 @@ export interface IFile {
   extension: string;
   relativePath: string;
   contents: string;
-  history: any[],
+  history: any[];
   size: number;
   modifiedTime: string;
   accessTime: string;
@@ -45,6 +46,7 @@ export enum CALLBACK {
   REDUCE,
   FILTER,
   FETCH,
+  SORT,
   FROM,
   TO,
   READ,

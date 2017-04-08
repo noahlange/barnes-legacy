@@ -1,25 +1,24 @@
-import * as glob from 'glob-promise';
-import { appendToHistory, areFileish, hasHistory, isFileish, getFile, makeFile, md5, metamarked } from './utils';
-import { CALLBACK, IFile, ICallbackRecord, EachFn, MapFn, SeriesFn, FilterFn, ReduceFn, RenderFn, ToFn, FromFn, FetchFn, WriteFn, UseFn } from './types';
-import { resolve } from 'path';
+import * as asyncMergeSort from 'async-merge-sort';
 import * as Debug from 'debug';
+import * as glob from 'glob-promise';
+import { resolve } from 'path';
 import * as pretty from 'prettyjson';
+
+import { CALLBACK, ICallbackRecord, IFile } from './types';
+import { FetchFn, FilterFn, FromFn, MapFn, ReduceFn, RenderFn, SeriesFn, SortFn, ToFn, UseFn, WriteFn } from './types';
+import { appendToHistory, areFileish, getFile, hasHistory, isFileish, makeFile } from './utils';
 
 const debug = Debug('barnes');
 
 export default class Barnes<T> {
 
   public cwd: string;
+  public meta: Map<any, any> = new Map();
   private _files: T[] = [];
   private _fns: ICallbackRecord[] = [];
-  public meta: Map<any, any> = new Map();
 
   public get length() {
     return this._files.length;
-  }
-
-  public watch() {
-    return this;
   }
 
   public set(key: any, value: any): Barnes<T> {
@@ -38,7 +37,7 @@ export default class Barnes<T> {
     return this._execute().catch(callback);
   }
 
-  /**      
+  /**
    * Fetches and populates items from remote resource.
    */
   public fetch<O>(callback: FetchFn): Barnes<any[]> {
@@ -75,7 +74,7 @@ export default class Barnes<T> {
   }
 
   public use<O>(callback: UseFn<O>): Barnes<T & O> {
-    debug('added barnes')
+    debug('added barnes');
     this._fns.push({ callback, type: CALLBACK.BARNES });
     return this._clone<T & O>();
   }
@@ -102,7 +101,7 @@ export default class Barnes<T> {
     return this._clone<O>();
   }
 
-  public reduce<O>(callback: ReduceFn<T, O[]>, initialValue?: O[]): Barnes<O>
+  public reduce<O>(callback: ReduceFn<T, O[]>, initialValue?: O[]): Barnes<O>;
   public reduce<O>(callback: ReduceFn<T, O>, initial?: O): Barnes<O> {
     debug(`added reduce plugin - ${ callback.name }`);
     this._fns.push({ callback, data: { initial }, type: CALLBACK.REDUCE });
@@ -113,6 +112,11 @@ export default class Barnes<T> {
     debug(`added filter plugin - ${ callback.name }`);
     this._fns.push({ callback, type: CALLBACK.FILTER });
     return this;
+  }
+
+  public sort(callback: SortFn<T>) {
+    debug(`added sort plugin - ${ callback.name }`);
+    this._fns.push({ callback, type: CALLBACK.SORT });
   }
 
   private _clone<T>(): Barnes<T> {
@@ -148,6 +152,9 @@ export default class Barnes<T> {
         break;
       case CALLBACK.REDUCE:
         res = await this._reduce(files, record.callback, record.data.initial);
+        break;
+      case CALLBACK.SORT:
+        res = await this._sort(files, record.callback);
         break;
       case CALLBACK.FETCH:
         res = await this._fetch(record.callback);
@@ -194,7 +201,7 @@ export default class Barnes<T> {
       } else {
         info = pretty.render(file);
       }
-      console.log(info);
+      console.info(info);
     }
     return files;
   }
@@ -211,7 +218,7 @@ export default class Barnes<T> {
 
   private async _series<O>(files: T[], callback: SeriesFn<T, O>): Promise<O[]> {
     return await files.reduce(async (a, b) => {
-      return (await a).concat(callback(b, files, this))
+      return (await a).concat(callback(b, files, this));
     }, Promise.resolve([]));
   }
 
@@ -224,9 +231,9 @@ export default class Barnes<T> {
       return curr;
     }));
   }
-  
+
   private async _filter(files: T[], callback: FilterFn<T>): Promise<T[]> {
-    let out = [];
+    const out = [];
     for (const file of files) {
       const test = await callback(file, files, this);
       if (test) {
@@ -236,13 +243,21 @@ export default class Barnes<T> {
     return out;
   }
 
+  private async _sort(files: T[], callback: SortFn<T>): Promise<T[]> {
+    return new Promise<T[]>((resolve, reject) => {
+      asyncMergeSort(files, async (a, b, cb) => {
+        cb(null, await callback(a, b, files, this));
+      }, (err, sorted: T[]) => resolve(sorted));
+    });
+  }
+
   private async _from<O>(callback: FromFn<O>) {
     return await callback();
   }
 
   private async _fetch(callback: FetchFn) {
-    let res = await callback();
-    let json = await res.json();
+    const res = await callback();
+    const json = await res.json();
     return Array.isArray(json) ? json : [ json ];
   }
 
@@ -253,23 +268,21 @@ export default class Barnes<T> {
     return files;
   }
 
-  private async _read(dir: string | string[]) {
-    let out = [];
-    let dirs = Array.isArray(dir) ? dir : [ dir ];
-    let watches = [];
+  private async _read(dirname: string | string[]) {
+    const out = [];
+    const dirs = Array.isArray(dirname) ? dirname : [ dirname ];
     for (const dir of dirs) {
       const g = resolve(this.cwd, dir);
-      watches.push(g);
       const paths = await glob(g);
       for (const path of paths) {
-        let file = await getFile(resolve(this.cwd, dir), path);
+        const file = await getFile(resolve(this.cwd, dir), path);
         out.push(file);
       }
     }
     return out;
   }
 
-  private async _write(files: (IFile & T)[], dir: string | WriteFn<T>): Promise<void[]> {
+  private async _write(files: Array<(IFile & T)>, dir: string | WriteFn<T>): Promise<void[]> {
     return Promise.all(files.map(async file => {
       if (typeof dir === 'function') {
         dir = await dir(file, files, this);

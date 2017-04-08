@@ -1,18 +1,18 @@
-import * as _md5 from 'md5-file';
 import { safeLoad } from 'js-yaml';
-import { IFile, IHistoryish } from './types';
-import Barnes from './Barnes';
-import * as mkdirp from 'mkdirp-promise';
-import { posix, extname, dirname, resolve } from 'path';
-import { readFile, writeFile, stat } from 'mz/fs';
 import { isObject } from 'lodash';
+import * as _md5 from 'md5-file';
+import * as mkdirp from 'mkdirp-promise';
+import { readFile, stat, writeFile } from 'mz/fs';
 import * as diff from 'object-diff';
+import { dirname, extname, posix } from 'path';
+
+import { IFile, IHistoryish } from './types';
 
 export function isFileish<T>(file: any): file is (IFile & T) {
   return file.relativePath && file.contents;
 }
 
-export function areFileish<T>(files: any): files is (IFile & T)[] {
+export function areFileish<T>(files: any): files is Array<IFile & T> {
   return files.every(isFileish);
 }
 
@@ -37,17 +37,17 @@ export async function getFile(dir, path) {
     contents = data.contents;
   }
   const out = {
-    path,
-    relativePath: posix.relative(dir, path),
+    accessTime: stats.atime.toJSON(),
+    birthTime: stats.birthtime.toJSON(),
+    changeTime: stats.ctime.toJSON(),
     contents,
     extension: extname(path),
     history: [],
-    size: stats.size,
+    md5: await md5(path),
     modifiedTime: stats.mtime.toJSON(),
-    accessTime: stats.atime.toJSON(),
-    changeTime: stats.ctime.toJSON(),
-    birthTime: stats.birthtime.toJSON(),
-    md5: await md5(path)
+    path,
+    relativePath: posix.relative(dir, path),
+    size: stats.size
   };
   return Object.assign(out, meta);
 }
@@ -70,17 +70,17 @@ export function md5(absolutePath: string): Promise<string> {
 
 export function metamarked(str: string) {
   if (str.slice(0, 3) !== '---') {
-    return { meta: null, contents: str };
+    return { contents: str, meta: null };
   } else {
     const matcher = /\n(\.{3}|-{3})/g;
     const metaEnd = matcher.exec(str);
     if (metaEnd) {
       return {
-        meta: safeLoad(str.slice(0, metaEnd.index)),
-        contents: str.slice(metaEnd.index)
+        contents: str.slice(metaEnd.index),
+        meta: safeLoad(str.slice(0, metaEnd.index))
       };
     } else {
-      return { meta: null, contents: str };
+      return { contents: str, meta: null };
     }
   }
 }

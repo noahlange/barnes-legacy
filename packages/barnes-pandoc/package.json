@@ -1,0 +1,18 @@
+{
+  "name": "barnes-pandoc",
+  "version": "",
+  "license": "MIT",
+  "main": "lib/main.js",
+  "types": "types.d.ts",
+  "dependencies": {
+    "node-pandoc": "^0.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.2.2",
+    "tslint": "^5.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint --project '../../tslint.json' src/**/*.ts"
+  }
+}
