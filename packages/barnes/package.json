@@ -1,7 +1,7 @@
 {
   "name": "barnes",
-  "version": "0.1.0",
   "author": "Noah Lange <noahrlange@gmail.com>",
+  "version": "0.1.0-alpha.d611d054",
   "repository": {
     "type": "git",
     "url": "http://github.com/noahlange/barnes.git"

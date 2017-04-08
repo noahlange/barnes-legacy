@@ -1,5 +1,5 @@
 yarn.lock
 node_modules
 examples
-packages/**/*.js
-packages/barnes-*
+packages/**/*..js
+wip
