@@ -20,10 +20,11 @@ import * as nunjucks from 'nunjucks';
 (async () => {
   await new Barnes('/Users/Dev/Documents')
     .read('**/*.md')
-    // assign layout property to each file
-    .map(file => Object.assign(file, { layout: 'file.njk' }))
-    // convert layout'd files to HTML
-    .map(consolidate('nunjucks'))
+    // assign 'template' property to each file
+    .map(file => Object.assign(file, { template: 'file.njk' }))
+    // convert layout'd files to HTML - using custom key 'template'
+    // (defaults to 'layout')
+    .map(consolidate({ engine: 'nunjucks', key: 'template' })
     // all layout'd files are now HTML!
     .write('public');
 }());

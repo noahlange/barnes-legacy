@@ -17,8 +17,10 @@ import Barnes from 'barnes';
 import preact from 'barnes-preact';
 
 // pass an optional (can be async) function; its result will be passed as the
-// component's data prop
+// component's data prop.
 import query from './query';
+// pass an optional default component
+import component from './default-component';
 
 (async () => {
   await new Barnes('/Users/Dev/Documents')
@@ -26,8 +28,9 @@ import query from './query';
     // assign layout property to each file
     .map(file => Object.assign(file, { layout }))
     // convert layout'd files to HTML
-    .map(preact(query))
-    // all layout'd files are now HTML!
+    .map(preact({ component, query }))
+    // all layout'd files are now HTML (fragments, you'll need to wrap them
+    // accordingly)
     .write('public');
 }());
 ```

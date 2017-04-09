@@ -10,7 +10,8 @@ declare module 'barnes-preact' {
   }
 
   interface IConsolidateOptions {
-    engine: string;
+    layouts?: string;
+    engine?: string;
   }
 
   export default function consolidate(options?: IConsolidateOptions): MapFn<IContented, IContented>;
