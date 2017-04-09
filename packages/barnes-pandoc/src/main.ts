@@ -75,7 +75,7 @@ export default function pandoc(options: IPandocOpts): MapFn<IFileish, IFileish> 
     const goodToGo = [ fromExt, fromFmt, toExt, toFmt ].every(item => !!item);
     if (goodToGo) {
       file.extension = toExt;
-      file.contents = await _pandoc(file.contents, fromExt, toFmt);
+      file.contents = await _pandoc(file.contents, fromFmt, toFmt);
       file.path = file.path.replace(fromExt, toExt);
       file.relativePath = file.path.replace(fromExt, toExt);
     }
