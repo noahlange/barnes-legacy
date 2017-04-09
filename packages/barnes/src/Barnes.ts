@@ -5,7 +5,7 @@ import { resolve } from 'path';
 import * as pretty from 'prettyjson';
 
 import { CALLBACK, ICallbackRecord, IFile } from './types';
-import { FetchFn, FilterFn, FromFn, MapFn, ReduceFn, RenderFn, SeriesFn, SortFn, ToFn, UseFn, WriteFn } from './types';
+import { FetchFn, FilterFn, FromFn, MapFn, ReduceFn, RenderFn, SeriesFn, SortFn, ToFn, WriteFn } from './types';
 import { appendToHistory, areFileish, getFile, hasHistory, isFileish, makeFile } from './utils';
 
 const debug = Debug('barnes');
@@ -73,9 +73,12 @@ export default class Barnes<T> {
     return this;
   }
 
-  public use<O>(callback: UseFn<O>): Barnes<T & O> {
-    debug('added barnes');
-    this._fns.push({ callback, type: CALLBACK.BARNES });
+  public use<O>(barnes: Barnes<O>): Barnes<T & O> {
+    debug(`using barnes`);
+    if (!barnes.cwd) {
+      barnes.cwd = this.cwd;
+    }
+    this._fns.push({ data: { barnes }, type: CALLBACK.USE });
     return this._clone<T & O>();
   }
 
@@ -121,22 +124,27 @@ export default class Barnes<T> {
 
   private _clone<T>(): Barnes<T> {
     const barnes = new Barnes<T>(this.cwd);
-    barnes._fns = this._fns;
-    barnes.meta = this.meta;
+    barnes._fns = this._fns.slice(0);
+    barnes.meta = new Map(this.meta);
     return barnes;
   }
 
   private async callback<O>(record: ICallbackRecord, files: T | T[]): Promise<O[]> {
     files = Array.isArray(files) ? files : [ files ];
-    debug(`executing plugin on ${ files && files.length ? files.length : files } files`);
+    debug(`executing plugin ${ CALLBACK[record.type] } on ${ files && files.length ? files.length : 0 } files`);
     const time = process.hrtime();
     let res = [];
     switch (record.type) {
       case CALLBACK.SET:
-        res = await this._set(record.data.key, record.data.value);
+        res = await this._set(files, record.data.key, record.data.value);
         break;
-      case CALLBACK.BARNES:
-        res = res.concat(await this._barnes(record.callback));
+      case CALLBACK.USE:
+        const barnes = record.data.barnes;
+        const clone = new Barnes<T>(barnes.cwd);
+        clone._fns = [];
+        clone._files = await barnes;
+        clone.meta = new Map(barnes.meta);
+        res = [ ...files, clone ];
         break;
       case CALLBACK.LOG:
         res = await this._log(files, record.callback);
@@ -184,13 +192,17 @@ export default class Barnes<T> {
     return res;
   }
 
-  private _execute() {
-    return this._fns.reduce(async (a, b) => this.callback(b, await a), Promise.resolve(this._files));
+  private async _execute() {
+    let res;
+    for (const fn of this._fns) {
+      res = await this.callback(fn, this._files);
+    }
+    return res;
   }
 
-  private async _set(key, value) {
+  private async _set(files: T[], key, value) {
     this.meta.set(key, await value);
-    return this._files;
+    return files;
   }
 
   private async _log(files: T[], callback?: RenderFn<T>) {
@@ -206,10 +218,6 @@ export default class Barnes<T> {
     return files;
   }
 
-  private _barnes<T>(barnes: (dir: string) => Barnes<T> | Barnes<T>) {
-    return barnes instanceof Barnes ? barnes : barnes(this.cwd);
-  }
-
   private async _reduce<O>(files: T[], callback, i) {
     return files.reduce(async (prev, curr, idx, array) => {
       return callback(await prev, curr, array, this);
@@ -217,16 +225,19 @@ export default class Barnes<T> {
   }
 
   private async _series<O>(files: T[], callback: SeriesFn<T, O>): Promise<O[]> {
-    return await files.reduce(async (a, b) => {
-      return (await a).concat(callback(b, files, this));
-    }, Promise.resolve([]));
+    let out = [];
+    for (const file of files) {
+      out.push(await callback(file, files, this));
+    }
+    return out;
   }
 
   private async _map<O>(files: T[], callback: MapFn<T, O>): Promise<O[]> {
-    return Promise.all(files.map(async (file) => {
-      let curr = await callback(Object.assign({}, file), files, this);
+    return await Promise.all(files.map(async (file, idx, arr) => {
+      const clone = Object.assign({}, file);
+      let curr = await callback(file, arr, this);
       if (isFileish<O>(curr) && hasHistory(curr)) {
-        curr = appendToHistory<T, O>(file, curr);
+        curr = appendToHistory<T, O>(clone, curr);
       }
       return curr;
     }));
@@ -292,7 +303,11 @@ export default class Barnes<T> {
     }));
   }
 
-  constructor(path: string) {
+  /**
+   * Path is optional - if you `.use()` a Barnes instance, its path will
+   * default to the parent's path.
+   */
+  constructor(path?: string) {
     this.cwd = path;
   }
 }

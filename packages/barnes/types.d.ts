@@ -14,7 +14,7 @@ declare module 'barnes' {
 
     public set(key: any, value: any): Barnes<T>;
 
-    public use<O>(callback: UseFn<O>): Barnes<T & Barnes<O>>
+    public use<O>(callback: Barnes<O>): Barnes<T & Barnes<O>>
     public fetch<O>(callback: FetchFn): Barnes<T & O>;
     public from<O>(callback: FromFn<O>): Barnes<T & O>;
     public read(dir: string | string[]): Barnes<T & IFile>;
@@ -33,7 +33,7 @@ declare module 'barnes' {
     public filter(callback: FilterFn<T>): this;
     public sort(callback: SortFn<T>): this;
 
-    constructor(cwd: string);
+    constructor(cwd?: string);
   }
 
   export enum CALLBACK {
@@ -58,7 +58,6 @@ declare module 'barnes' {
   export type ToFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<any> | any;
   export type FetchFn = () => Promise<Response>;
   export type WriteFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<string> | string;
-  export type UseFn<O> = ((dir: string) => Promise<Barnes<O>> | Barnes<O>) | Barnes<O>;
   export type SortFn<I> = (fileA: I, fileB: I, files: I[], barnes: Barnes<I>) => Promise<1 | -1>;
 
   export interface IFile {

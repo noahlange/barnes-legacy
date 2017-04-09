@@ -11,7 +11,6 @@ export type FromFn<O> = () => Promise<O[]> | O[];
 export type ToFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<any> | any;
 export type FetchFn = () => Promise<Response>;
 export type WriteFn<O> = (file: O, files: O[], barnes: Barnes<O>) => Promise<string> | string;
-export type UseFn<O> = ((dir: string) => Promise<Barnes<O>> | Barnes<O>) | Barnes<O>;
 export type SortFn<I> = (fileA: I, fileB: I, files: I[], barnes: Barnes<I>) => Promise<1 | -1>;
 
 export interface IHistoryish {
@@ -39,7 +38,7 @@ export interface ICallbackRecord {
 }
 
 export enum CALLBACK {
-  BARNES,
+  USE,
   SET,
   MAP,
   SERIES,

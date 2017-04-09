@@ -72,7 +72,11 @@ simple as adding another metadata field or as complex as transforming markdown
 to HTML. Let's write an example plugin to add a `hot` boolean to files with >=
 25 comments over the last 24 hours.
 
-```javascript
+```typescript
+interface ICommented {
+  comments: { created: string; }[]
+}
+
 export default function hot() {
   return async function hot(file, files, barnes) {
     const yesterday = new Date(Date.now() - 8.64e+7);
@@ -93,16 +97,15 @@ import brsync from 'barnes-rsync';
 import lyrics from './lyrics';
 import blog from './blog';
 
-const assign = ::Object.assign;
 const rsync = brsync('/var/www/mysite.com/public');
 
 new Barnes('/Users/dev')
-  // load barnes instances / factories
+  // load barnes instances
   .use(lyrics)
   .use(blog)
   // assign metadata to barnes instances
-  .map(app => assign(app, app.meta.get('meta') ))
-  // write each instance to disk
+  .map(app => Object.assign(app, app.meta.get('meta') ))
+  // write each instance to disk using assigned metadata
   .to(app => app.write(app.dir))
   // rsync to remote directory
   .to(app => rsync(app.dir))
